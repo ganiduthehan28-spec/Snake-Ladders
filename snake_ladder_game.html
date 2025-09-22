@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake and Ladders Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            padding: 20px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .game-title {
+            color: #333;
+            font-size: 2.5em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 2px;
+            background: #333;
+            border-radius: 10px;
+            padding: 5px;
+            aspect-ratio: 1;
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            font-size: 0.7em;
+            font-weight: bold;
+            color: #666;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .cell:nth-child(odd) {
+            background: #e8f4f8;
+        }
+
+        .cell:nth-child(even) {
+            background: #d4eaf2;
+        }
+
+        .snake {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52) !important;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .snake::before {
+            content: '🐍🐍🐍';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            opacity: 0.7;
+            animation: slither 3s ease-in-out infinite;
+        }
+
+        @keyframes slither {
+            0%, 100% { transform: translateX(-2px); }
+            50% { transform: translateX(2px); }
+        }
+
+        .ladder {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d) !important;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ladder::before {
+            content: '🪜🔝✨';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            opacity: 0.9;
+            animation: climb 2s ease-in-out infinite;
+        }
+
+        @keyframes climb {
+            0%, 100% { transform: translateY(1px); }
+            50% { transform: translateY(-1px); }
+        }
+
+        .player {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            border: 3px solid #ff6b35;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            z-index: 10;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            animation: pulse 2s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .computer {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: 3px solid #4c63d2;
+            animation: computerPulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes computerPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3); }
+            50% { transform: scale(1.1); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5); }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .dice-container {
+            text-align: center;
+        }
+
+        .dice {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border: 3px solid #333;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 auto 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .dice:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .dice.rolling {
+            animation: roll 0.5s ease-in-out;
+        }
+
+        @keyframes roll {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(90deg); }
+            50% { transform: rotate(180deg); }
+            75% { transform: rotate(270deg); }
+        }
+
+        .roll-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .roll-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .roll-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Mobile Controls */
+        .mobile-controls {
+            display: none;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        .arrow-btn {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 50%;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .arrow-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .arrow-btn:active {
+            transform: scale(0.95);
+        }
+
+        .arrow-btn.up { grid-column: 2; }
+        .arrow-btn.left { grid-column: 1; grid-row: 2; }
+        .arrow-btn.right { grid-column: 3; grid-row: 2; }
+        .arrow-btn.down { grid-column: 2; grid-row: 3; }
+
+        .game-info {
+            text-align: center;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .player-info {
+            padding: 10px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .player-info.active {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .player-info.computer-active {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .player-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .player-position {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .player-status {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .computer-active .player-status {
+            color: #e0e0e0;
+        }
+
+        .current-position {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            grid-column: 1 / -1;
+        }
+
+        .game-message {
+            font-size: 1em;
+            color: #666;
+            min-height: 20px;
+        }
+
+        .win-message {
+            color: #28a745;
+            font-weight: bold;
+            animation: celebrate 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes celebrate {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .mobile-controls {
+                display: grid;
+            }
+            
+            .game-title {
+                font-size: 2em;
+            }
+            
+            .cell {
+                font-size: 0.6em;
+            }
+            
+            .dice {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 15px;
+            }
+            
+            .game-title {
+                font-size: 1.8em;
+            }
+            
+            .cell {
+                font-size: 0.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1 class="game-title">🐍 Snake & Ladders 🪜</h1>
+        </div>
+        
+        <div class="game-info">
+            <div class="player-info" id="humanPlayer">
+                <div class="player-name">👤 You</div>
+                <div class="player-position">Position: <span id="humanPosition">1</span></div>
+                <div class="player-status" id="humanStatus">Ready to play!</div>
+            </div>
+            <div class="player-info" id="computerPlayer">
+                <div class="player-name">🤖 Computer</div>
+                <div class="player-position">Position: <span id="computerPosition">1</span></div>
+                <div class="player-status" id="computerStatus">Waiting...</div>
+            </div>
+            <div class="game-message" id="message">Your turn! Roll the dice to start!</div>
+        </div>
+        
+        <div class="game-board" id="gameBoard"></div>
+        
+        <div class="controls">
+            <div class="dice-container">
+                <div class="dice" id="dice">🎲</div>
+                <button class="roll-btn" id="rollBtn">Roll Dice</button>
+            </div>
+        </div>
+        
+        <div class="mobile-controls" id="mobileControls">
+            <button class="arrow-btn up" data-direction="up">↑</button>
+            <button class="arrow-btn left" data-direction="left">←</button>
+            <button class="arrow-btn right" data-direction="right">→</button>
+            <button class="arrow-btn down" data-direction="down">↓</button>
+        </div>
+    </div>
+
+    <script>
+        class SnakeAndLaddersGame {
+            constructor() {
+                this.boardSize = 100;
+                this.humanPosition = 1;
+                this.computerPosition = 1;
+                this.currentPlayer = 'human'; // 'human' or 'computer'
+                this.gameWon = false;
+                this.canMove = true;
+                this.computerThinking = false;
+                
+                // Snake positions (head -> tail)
+                this.snakes = {
+                    99: 78, 95: 75, 92: 88, 87: 24, 83: 19,
+                    73: 53, 69: 33, 64: 60, 59: 40, 55: 34,
+                    52: 29, 48: 26, 46: 25, 44: 22, 16: 6
+                };
+                
+                // Ladder positions (bottom -> top)
+                this.ladders = {
+                    1: 38, 4: 14, 9: 21, 21: 42, 28: 84,
+                    36: 44, 51: 67, 71: 91, 80: 100
+                };
+                
+                // Visual indicators for snake tails and ladder tops
+                this.snakeTails = Object.values(this.snakes);
+                this.ladderTops = Object.values(this.ladders);
+                
+                this.init();
+            }
+            
+            init() {
+                this.createBoard();
+                this.bindEvents();
+                this.updateUI();
+            }
+            
+            createBoard() {
+                const board = document.getElementById('gameBoard');
+                board.innerHTML = '';
+                
+                // Create cells in reverse order for proper numbering
+                for (let i = 100; i >= 1; i--) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = `cell-${i}`;
+                    
+                    // Calculate row for alternating number direction
+                    const row = Math.floor((i - 1) / 10);
+                    const col = (i - 1) % 10;
+                    let cellNumber;
+                    
+                    if (row % 2 === 0) {
+                        cellNumber = i;
+                    } else {
+                        cellNumber = (row * 10) + (10 - col);
+                    }
+                    
+                    cell.textContent = cellNumber;
+                    
+                    // Add snake or ladder styling
+                    if (this.snakes[cellNumber]) {
+                        cell.classList.add('snake');
+                        cell.innerHTML = `<div style="position: relative; z-index: 2; background: rgba(0,0,0,0.7); padding: 2px; border-radius: 3px;">${cellNumber}</div>`;
+                        cell.title = `Snake Head! Slides down to ${this.snakes[cellNumber]}`;
+                    } else if (this.ladders[cellNumber]) {
+                        cell.classList.add('ladder');
+                        cell.innerHTML = `<div style="position: relative; z-index: 2; background: rgba(0,0,0,0.7); padding: 2px; border-radius: 3px;">${cellNumber}</div>`;
+                        cell.title = `Ladder Bottom! Climbs up to ${this.ladders[cellNumber]}`;
+                    } else if (this.snakeTails.includes(cellNumber)) {
+                        cell.innerHTML = `<div style="color: #ff4757; font-weight: bold;">${cellNumber}</div><div style="font-size: 0.6em;">🐍🔚</div>`;
+                        cell.title = 'Snake Tail - Safe zone!';
+                        cell.style.background = 'linear-gradient(45deg, #ffcccc, #ffe6e6)';
+                    } else if (this.ladderTops.includes(cellNumber)) {
+                        cell.innerHTML = `<div style="color: #2ecc71; font-weight: bold;">${cellNumber}</div><div style="font-size: 0.6em;">🎯🔝</div>`;
+                        cell.title = 'Ladder Top - You made it!';
+                        cell.style.background = 'linear-gradient(45deg, #ccffcc, #e6ffe6)';
+                    }
+                    
+                    board.appendChild(cell);
+                }
+                
+                this.placePlayer();
+            }
+            
+            placePlayer() {
+                // Remove existing players
+                const existingPlayers = document.querySelectorAll('.player');
+                existingPlayers.forEach(player => player.remove());
+                
+                // Add human player
+                const humanCell = document.getElementById(`cell-${this.humanPosition}`);
+                if (humanCell) {
+                    const humanPlayer = document.createElement('div');
+                    humanPlayer.className = 'player';
+                    humanPlayer.textContent = '👤';
+                    humanPlayer.style.left = '2px';
+                    humanPlayer.style.top = '2px';
+                    humanCell.appendChild(humanPlayer);
+                }
+                
+                // Add computer player
+                const computerCell = document.getElementById(`cell-${this.computerPosition}`);
+                if (computerCell) {
+                    const computerPlayer = document.createElement('div');
+                    computerPlayer.className = 'player computer';
+                    computerPlayer.textContent = '🤖';
+                    computerPlayer.style.right = '2px';
+                    computerPlayer.style.top = '2px';
+                    computerPlayer.style.left = 'auto';
+                    computerCell.appendChild(computerPlayer);
+                }
+            }
+            
+            rollDice() {
+                if (!this.canMove || this.gameWon || this.currentPlayer !== 'human') return;
+                
+                const dice = document.getElementById('dice');
+                const rollBtn = document.getElementById('rollBtn');
+                
+                // Disable button during animation
+                rollBtn.disabled = true;
+                dice.classList.add('rolling');
+                this.canMove = false;
+                
+                // Animate dice roll
+                let rollCount = 0;
+                const rollInterval = setInterval(() => {
+                    const tempRoll = Math.floor(Math.random() * 6) + 1;
+                    dice.textContent = tempRoll;
+                    rollCount++;
+                    
+                    if (rollCount >= 8) {
+                        clearInterval(rollInterval);
+                        dice.classList.remove('rolling');
+                        
+                        const finalRoll = Math.floor(Math.random() * 6) + 1;
+                        dice.textContent = finalRoll;
+                        
+                        setTimeout(() => {
+                            this.movePlayer(finalRoll, 'human');
+                            rollBtn.disabled = false;
+                        }, 300);
+                    }
+                }, 100);
+            }
+            
+            computerTurn() {
+                if (this.gameWon || this.currentPlayer !== 'computer') return;
+                
+                this.computerThinking = true;
+                this.updatePlayerUI();
+                this.showMessage("🤖 Computer is thinking...", 'info');
+                
+                // Computer thinking delay (1-3 seconds for realism)
+                const thinkingTime = 1000 + Math.random() * 2000;
+                
+                setTimeout(() => {
+                    const dice = document.getElementById('dice');
+                    dice.classList.add('rolling');
+                    
+                    // Computer dice roll animation
+                    let rollCount = 0;
+                    const rollInterval = setInterval(() => {
+                        const tempRoll = Math.floor(Math.random() * 6) + 1;
+                        dice.textContent = tempRoll;
+                        rollCount++;
+                        
+                        if (rollCount >= 8) {
+                            clearInterval(rollInterval);
+                            dice.classList.remove('rolling');
+                            
+                            const finalRoll = this.getComputerRoll();
+                            dice.textContent = finalRoll;
+                            
+                            setTimeout(() => {
+                                this.movePlayer(finalRoll, 'computer');
+                                this.computerThinking = false;
+                            }, 300);
+                        }
+                    }, 100);
+                }, thinkingTime);
+            }
+            
+            getComputerRoll() {
+                // Computer uses strategic thinking with some randomness
+                const baseRoll = Math.floor(Math.random() * 6) + 1;
+                const currentPos = this.computerPosition;
+                
+                // Check if any roll would land on a snake head
+                for (let roll = 1; roll <= 6; roll++) {
+                    const newPos = currentPos + roll;
+                    if (newPos <= 100) {
+                        // Avoid snakes if possible (70% chance)
+                        if (this.snakes[newPos] && Math.random() < 0.7) {
+                            continue;
+                        }
+                        // Prefer ladders if possible (80% chance)
+                        if (this.ladders[newPos] && Math.random() < 0.8) {
+                            return roll;
+                        }
+                    }
+                }
+                
+                return baseRoll;
+            }
+            
+            movePlayer(steps, player) {
+                const isHuman = player === 'human';
+                const currentPos = isHuman ? this.humanPosition : this.computerPosition;
+                const newPosition = Math.min(currentPos + steps, 100);
+                
+                if (isHuman) {
+                    this.humanPosition = newPosition;
+                } else {
+                    this.computerPosition = newPosition;
+                }
+                
+                const playerName = isHuman ? "You" : "Computer";
+                const emoji = isHuman ? "👤" : "🤖";
+                
+                // Check for snakes and ladders
+                setTimeout(() => {
+                    if (this.snakes[newPosition]) {
+                        const snakeEnd = this.snakes[newPosition];
+                        this.showMessage(`${emoji} ${playerName} got bit by a snake! Slide down to ${snakeEnd}`, 'danger');
+                        setTimeout(() => {
+                            if (isHuman) {
+                                this.humanPosition = snakeEnd;
+                            } else {
+                                this.computerPosition = snakeEnd;
+                            }
+                            this.placePlayer();
+                            this.updatePlayerUI();
+                            this.switchTurn();
+                        }, 1000);
+                    } else if (this.ladders[newPosition]) {
+                        const ladderTop = this.ladders[newPosition];
+                        this.showMessage(`${emoji} ${playerName} found a ladder! Climb up to ${ladderTop}`, 'success');
+                        setTimeout(() => {
+                            if (isHuman) {
+                                this.humanPosition = ladderTop;
+                            } else {
+                                this.computerPosition = ladderTop;
+                            }
+                            this.placePlayer();
+                            this.updatePlayerUI();
+                            this.checkWin(player);
+                        }, 1000);
+                    } else if (newPosition === 100) {
+                        this.gameWon = true;
+                        const winnerName = isHuman ? "You" : "Computer";
+                        const winMessage = isHuman ? "🎉 Congratulations! You won! 🎉" : "🤖 Computer wins! Better luck next time!";
+                        this.showMessage(winMessage, 'win');
+                        this.updatePlayerUI();
+                    } else {
+                        this.showMessage(`${emoji} ${playerName} moved ${steps} steps!`, 'info');
+                        this.switchTurn();
+                    }
+                    
+                    this.placePlayer();
+                    this.updatePlayerUI();
+                }, 500);
+            }
+            
+            switchTurn() {
+                if (this.gameWon) return;
+                
+                this.currentPlayer = this.currentPlayer === 'human' ? 'computer' : 'human';
+                this.canMove = true;
+                this.updatePlayerUI();
+                
+                if (this.currentPlayer === 'computer') {
+                    setTimeout(() => this.computerTurn(), 1000);
+                } else {
+                    setTimeout(() => {
+                        this.showMessage("Your turn! Roll the dice!", 'info');
+                    }, 1500);
+                }
+            }
+            
+            checkWin(player) {
+                const position = player === 'human' ? this.humanPosition : this.computerPosition;
+                if (position >= 100) {
+                    this.gameWon = true;
+                    const winnerName = player === 'human' ? "You" : "Computer";
+                    const winMessage = player === 'human' ? "🎉 Congratulations! You won! 🎉" : "🤖 Computer wins! Better luck next time!";
+                    this.showMessage(winMessage, 'win');
+                } else {
+                    this.switchTurn();
+                }
+            }
+            
+            updatePlayerUI() {
+                // Update positions
+                document.getElementById('humanPosition').textContent = this.humanPosition;
+                document.getElementById('computerPosition').textContent = this.computerPosition;
+                
+                // Update active player styling
+                const humanPlayerDiv = document.getElementById('humanPlayer');
+                const computerPlayerDiv = document.getElementById('computerPlayer');
+                const rollBtn = document.getElementById('rollBtn');
+                
+                humanPlayerDiv.classList.remove('active');
+                computerPlayerDiv.classList.remove('computer-active');
+                
+                if (this.currentPlayer === 'human' && !this.gameWon) {
+                    humanPlayerDiv.classList.add('active');
+                    document.getElementById('humanStatus').textContent = 'Your turn!';
+                    document.getElementById('computerStatus').textContent = 'Waiting...';
+                    rollBtn.style.display = 'block';
+                } else if (this.currentPlayer === 'computer' && !this.gameWon) {
+                    computerPlayerDiv.classList.add('computer-active');
+                    document.getElementById('humanStatus').textContent = 'Waiting...';
+                    if (this.computerThinking) {
+                        document.getElementById('computerStatus').textContent = 'Thinking...';
+                    } else {
+                        document.getElementById('computerStatus').textContent = "Computer's turn!";
+                    }
+                    rollBtn.style.display = 'none';
+                } else if (this.gameWon) {
+                    rollBtn.style.display = 'none';
+                    if (this.humanPosition >= 100) {
+                        document.getElementById('humanStatus').textContent = 'Winner! 🎉';
+                        document.getElementById('computerStatus').textContent = 'Lost 😔';
+                    } else {
+                        document.getElementById('humanStatus').textContent = 'Lost 😔';
+                        document.getElementById('computerStatus').textContent = 'Winner! 🎉';
+                    }
+                }
+            }
+            
+            showMessage(text, type = 'info') {
+                const messageEl = document.getElementById('message');
+                messageEl.textContent = text;
+                messageEl.className = 'game-message';
+                
+                if (type === 'win') {
+                    messageEl.classList.add('win-message');
+                }
+                
+                // Don't auto-clear win messages or computer turn messages
+                if (type !== 'win' && !text.includes('Computer') && !text.includes('Your turn')) {
+                    setTimeout(() => {
+                        if (!this.gameWon) {
+                            const currentTurnMsg = this.currentPlayer === 'human' ? 
+                                'Your turn! Roll the dice!' : 'Computer is thinking...';
+                            messageEl.textContent = currentTurnMsg;
+                            messageEl.className = 'game-message';
+                        }
+                    }, 2500);
+                }
+            }
+            
+            updateUI() {
+                // Legacy method for backward compatibility
+                this.updatePlayerUI();
+            }
+            
+            handleKeyPress(event) {
+                if (this.gameWon || this.currentPlayer !== 'human') return;
+                
+                switch(event.code) {
+                    case 'Space':
+                    case 'Enter':
+                        event.preventDefault();
+                        this.rollDice();
+                        break;
+                    case 'ArrowUp':
+                    case 'ArrowDown':
+                    case 'ArrowLeft':
+                    case 'ArrowRight':
+                        event.preventDefault();
+                        this.rollDice();
+                        break;
+                }
+            }
+            
+            resetGame() {
+                this.humanPosition = 1;
+                this.computerPosition = 1;
+                this.currentPlayer = 'human';
+                this.gameWon = false;
+                this.canMove = true;
+                this.computerThinking = false;
+                this.placePlayer();
+                this.updatePlayerUI();
+                document.getElementById('message').textContent = 'Your turn! Roll the dice to start!';
+                document.getElementById('message').className = 'game-message';
+                document.getElementById('dice').textContent = '🎲';
+                document.getElementById('rollBtn').style.display = 'block';
+                document.getElementById('rollBtn').disabled = false;
+            }
+            
+            bindEvents() {
+                // Dice roll button
+                document.getElementById('rollBtn').addEventListener('click', () => {
+                    this.rollDice();
+                });
+                
+                // Keyboard controls
+                document.addEventListener('keydown', (e) => {
+                    this.handleKeyPress(e);
+                });
+                
+                // Mobile controls
+                const mobileButtons = document.querySelectorAll('.arrow-btn');
+                mobileButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (this.currentPlayer === 'human') {
+                            this.rollDice();
+                        }
+                    });
+                });
+                
+                // Reset on title click
+                document.querySelector('.game-title').addEventListener('click', () => {
+                    this.resetGame();
+                });
+                
+                // Dice click
+                document.getElementById('dice').addEventListener('click', () => {
+                    this.rollDice();
+                });
+            }
+        }
+        
+        // Initialize game when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new SnakeAndLaddersGame();
+        });
+        
+        // Show mobile controls on touch devices
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+            document.getElementById('mobileControls').style.display = 'grid';
+        }
+    </script>
+</body>
+</html>
